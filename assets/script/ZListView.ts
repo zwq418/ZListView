@@ -33,6 +33,9 @@ export default class ZListView extends cc.Component {
     @property
     listKey = 'id';
 
+    @property
+    listType = 'type'
+
     @property([cc.Node])
     _itemNodes: cc.Node[][] = [];
 
@@ -338,7 +341,7 @@ export default class ZListView extends cc.Component {
     }
 
     popNode(itemData) {
-        const node = this._itemNodes[itemData.type].pop();
+        const node = this._itemNodes[itemData[this.listType]].pop();
         node.x = 0;
         node.opacity = 255;
         node.dataKey = itemData[this.listKey];
