@@ -27,6 +27,7 @@ export default class ZListItemText extends ZListItem{
         this.loadAvatar(avatar);
         this.nameLabel.string = `用户${id}`;
         this.messageLabel.string = `${id}哈哈哈哈啊哈哈${id}`;
+        this.node.height = this.messageLabel.node.height + 77;
     }
 
     private loadAvatar(url) {
@@ -34,10 +35,10 @@ export default class ZListItemText extends ZListItem{
             if (err) return;
             texture.packable = false;
             this.avatarSprite.spriteFrame = new cc.SpriteFrame(texture);
-            if (texture.width && texture.height) {
-                this.avatarSprite.node.width = texture.width;
-                this.avatarSprite.node.height = texture.height;
-            }
+            // if (texture.width && texture.height) {
+            //     this.avatarSprite.node.width = texture.width;
+            //     this.avatarSprite.node.height = texture.height;
+            // }
         });
     }
 }

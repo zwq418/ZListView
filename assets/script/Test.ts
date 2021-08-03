@@ -45,13 +45,23 @@ export default class TestScene extends cc.Component {
     }
 
     private addData(index, add) {
-        const id = this.listData[index].id + add;
+        const current = this.listData[index];
+        const near = this.listData[index + add];
+        const id = near ? (current.id + near.id) / 2 : current.id + add;
         const idUInt = Math.round(Math.abs(id));
         this.listData.splice(index + (add > 0 ? 1 : 0), 0, {
             id,
             type: idUInt % 2,
             avatar: URLS[idUInt % URLS.length]
         });
+    }
+
+    public scrollToTop() {
+        this.listView.scrollToTop();
+    }
+
+    public scrollToBottom() {
+        this.listView.scrollToBottom();
     }
 
     public bottomAdd1() {
@@ -79,14 +89,18 @@ export default class TestScene extends cc.Component {
     }
 
     public tenAdd1() {
-        this.addData(10, 0.01);
+        this.addData(10, 1);
         this.listView.notifyDataChanged();
     }
 
     public tenAdd10() {
         for (let i = 0; i < 10; i++) {
-            this.addData(10 + i, 0.01);
+            this.addData(10 + i, 1);
         }
         this.listView.notifyDataChanged();
+    }
+
+    public to10() {
+        this.listView;
     }
 }

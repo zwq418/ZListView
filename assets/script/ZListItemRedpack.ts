@@ -34,10 +34,10 @@ export default class ZListItemRedpack extends ZListItem{
             if (err) return;
             texture.packable = false;
             this.avatarSprite.spriteFrame = new cc.SpriteFrame(texture);
-            if (texture.width && texture.height) {
-                this.avatarSprite.node.width = texture.width;
-                this.avatarSprite.node.height = texture.height;
-            }
+            // if (texture.width && texture.height) {
+            //     this.avatarSprite.node.width = texture.width;
+            //     this.avatarSprite.node.height = texture.height;
+            // }
         });
     }
 }

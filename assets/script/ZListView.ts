@@ -2,8 +2,8 @@ import ZListItem from "./ZListItem";
 
 const {ccclass, property} = cc._decorator;
 
-let lastTouchTime;
-let lastSpeed;
+let lastTouchTime = 0;
+let lastSpeed = 0;
 let isTouch = false;
 let isScrolling = false;
 let topToBottom = true;
@@ -49,8 +49,25 @@ export default class ZListView extends cc.Component {
         this._scrollToBottom = true;
     }
 
+    public scrollToIndex(index) {
+
+    }
+
     public notifyDataChanged() {
-        this._listNodes[0]
+        if (topToBottom) {
+            let firstIndex;
+            let firstBottom = 0;
+            for (let i = this._listNodes.length - 1; i >= 0; i--) {
+                if (i === 0) {
+                    const firstNode = this._listNodes[i];
+                    firstIndex = this.listData.findIndex(item => item[this.listKey] === firstNode.dataKey);
+                    firstBottom = this.nodeTop(firstNode);
+                }
+                this.pushNode(this._listNodes[i]);
+            }
+            this._listNodes = [];
+            this.layoutItem(firstIndex, firstBottom);
+        }
     }
 
     onLoad () {
@@ -63,13 +80,13 @@ export default class ZListView extends cc.Component {
         for (let i = 0; i < this.itemPrefabs.length; i++) {
             this._itemNodes[i] = [];
             let itemsHeight = 0;
-            for (let j = 0; j < 10; j++) {
+            for (let j = 0; j < 20; j++) {
                 const node = cc.instantiate(this.itemPrefabs[i]);
                 this.node.addChild(node);
-                this.pushNode(i, node);
+                this.pushNode(node, i);
                 itemsHeight += node.height;
-                if (itemsHeight >= this._contentHeight) {
-                    // break;
+                if (itemsHeight >= this._contentHeight + 2 * node.height) {
+                    break;
                 }
             }
         }
@@ -79,73 +96,47 @@ export default class ZListView extends cc.Component {
         if (topToBottom) {
             this.layoutItemTopToBottom();
         } else {
-            this.scheduleOnce(() => {
-                this._contentHeight = this.node.height;
-                this.layoutItemBottomToTop();
-            })
+            this._contentHeight = this.node.height;
+            this.layoutItemBottomToTop();
         }
+    }
+
+    layoutItem(index, y) {
+        const node = this.popNode(this.listData[index]);
+        if (topToBottom) {
+            node.y = y - node.height * (1 - node.anchorY);
+        } else {
+            node.y = y + node.height * node.anchorY;
+        }
+        this._listNodes.push(node);
     }
 
     layoutItemTopToBottom() {
-        let lastNode;
-        for (let i = 0; i < this.listData.length; i++) {
-            const node = this.popNode(this.listData[i]);
-            const nodeOffset = node.height * (1- node.anchorY);
-            const y = lastNode ? lastNode.y - lastNode.height * lastNode.anchorY - nodeOffset
-            : this._contentHeight * (1- this.node.anchorY) - nodeOffset;
-            const nodeTop = -(y + node.height * (1 - node.anchorY));
-            if (nodeTop <= this._contentHeight) {
-                node.y = y;
-                this._listNodes.push(node);
-                lastNode = node;
-            }
-            const nodeBottom = -(y - node.height * node.anchorY);
-            if (nodeBottom > this._contentHeight) {
-                break;
-            }
-        }
+        this.layoutItem(0, this._contentHeight * (1 - this.node.anchorY));
     }
 
     layoutItemBottomToTop() {
-        let lastNode;
-        for (let i = this.listData.length - 1; i >= 0; i--) {
-            const node = this.popNode(this.listData[i]);
-            const nodeOffset = node.height * node.anchorY;
-            const y = lastNode ? lastNode.y + lastNode.height * (1 - lastNode.anchorY) + nodeOffset
-            : -this._contentHeight * this.node.anchorY + nodeOffset;
-            const nodeBottom = -(y - node.height * node.anchorY);
-            if (nodeBottom >= 0) {
-                node.y = y;
-                this._listNodes.push(node);
-                lastNode = node;
-            }
-            const nodeTop = -(y + node.height * (1 - node.anchorY));
-            if (nodeTop < 0) {
-                break;
-            }
-        }
+        this.layoutItem(this.listData.length - 1, this._contentHeight * -this.node.anchorY);
     }
 
     start () {
     }
 
     update (dt) {
-        if (!isTouch) {
-            if (isScrolling) {
-                if (Math.abs(lastSpeed) > 0.1) {
-                    this.scrollChildren(dt * lastSpeed * 1000);
-                    lastSpeed *= (1 - 5 *dt);
-                } else {
-                    isScrolling = false;
-                    lastSpeed = 0;
-                }
+        if (!isTouch && isScrolling) {
+            if (Math.abs(lastSpeed) > 0.1) {
+                lastSpeed *= (1 - 5 *dt);
+            } else {
+                isScrolling = false;
+                lastSpeed = 0;
             }
-        }
-        if (this._scrollToTop) {
-            this.scrollChildren(dt * -5 * 1000);
-        }
-        if (this._scrollToBottom) {
-            this.scrollChildren(dt * 5 * 1000);
+            this.scrollChildren(dt * lastSpeed * 1000);
+        } else if (this._scrollToTop) {
+            this.scrollChildren(dt * -10 * 1000);
+        } else if (this._scrollToBottom) {
+            this.scrollChildren(dt * 10 * 1000);
+        } else {
+            this.scrollChildren(0);
         }
     }
 
@@ -186,7 +177,7 @@ export default class ZListView extends cc.Component {
         this.scrollChildren(deltaY);
         const touchTime = getTimeInMilliseconds();
         lastSpeed = deltaY / (touchTime - lastTouchTime);
-        lastSpeed = lastSpeed > 25 ? 25 : lastSpeed < -25 ? -25 : lastSpeed;
+        lastSpeed = lastSpeed > 50 ? 50 : lastSpeed < -50 ? -50 : lastSpeed;
         lastTouchTime = getTimeInMilliseconds();
         isScrolling = true;
     }
@@ -213,7 +204,7 @@ export default class ZListView extends cc.Component {
                     deltaY = -firstNodeTop;
                 }
             }
-        } else {
+        } else if (deltaY > 0) {
             const lastNode = this._listNodes[this._listNodes.length - 1];
             if (lastNode.dataKey === this.listData[this.listData.length - 1][this.listKey]) {
                 const lastNodeBottom = this.nodeBottom(lastNode);
@@ -225,7 +216,7 @@ export default class ZListView extends cc.Component {
         if (deltaY === 0) {
             this._scrollToTop = false;
             this._scrollToBottom = false;
-            return;
+            // return;
         };
         for (let i = 0; i < this._listNodes.length; i++) {
             this._listNodes[i].y += deltaY;
@@ -262,7 +253,7 @@ export default class ZListView extends cc.Component {
             if (nodeBottom <= 0 && nodeTop >= -contentHeight ) {
                 keepNodes.push(node);
             } else {
-                this.pushNode(dataType, node);
+                this.pushNode(node);
             }
             // topToBottom
             if (i === this._listNodes.length - 1 && nodeBottom > -contentHeight) {
@@ -287,11 +278,17 @@ export default class ZListView extends cc.Component {
         return node.y - node.height * node.anchorY;
     }
 
-    pushNode(type, node) {
+    pushNode(node: cc.Node, type?) {
         node.x = 1000;
         node.opacity = 0;
-        node.dataType = type;
-        this._itemNodes[type].push(node);
+        if (typeof node.dataType === 'undefined') {
+            if (typeof type === 'undefined') {
+                throw new Error('没有设置节点type');
+            }
+            node.dataType = type;
+        }
+        this._itemNodes[node.dataType].push(node);
+        console.log('pushNode:', node.dataType, this._itemNodes[node.dataType].length);
     }
 
     popNode(itemData) {
@@ -300,6 +297,7 @@ export default class ZListView extends cc.Component {
         node.opacity = 255;
         node.dataKey = itemData[this.listKey];
         node.getComponent(ZListItem).data = itemData;
+        console.log('popNode:', node.dataType, this._itemNodes[node.dataType].length);
         return node;
     }
 }
