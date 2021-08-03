@@ -467,10 +467,11 @@
         "__uuid__": "1c5b04e7-0ed3-4982-90a6-1d6a058062a1"
       }
     ],
-    "_itemNodes": [],
-    "_listNodes": [],
+    "gap": 12,
     "listData": [],
     "listKey": "id",
+    "_itemNodes": [],
+    "_listNodes": [],
     "_contentHeight": 0,
     "_scrollToTop": false,
     "_scrollToBottom": false,

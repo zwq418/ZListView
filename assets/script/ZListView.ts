@@ -6,7 +6,7 @@ let lastTouchTime = 0;
 let lastSpeed = 0;
 let isTouch = false;
 let isScrolling = false;
-let topToBottom = true;
+let topToBottom = false;
 let scrollId;
 let scrollDirection = 0;
 let getTimeInMilliseconds = function() {
@@ -22,17 +22,20 @@ export default class ZListView extends cc.Component {
     @property([cc.Prefab])
     itemPrefabs: cc.Prefab[] = [];
 
-    @property([cc.Node])
-    _itemNodes: cc.Node[][] = [];
-
-    @property([cc.Node])
-    _listNodes: cc.Node[] = [];
+    @property
+    gap = 0;
 
     @property
     listData: any[] = [];
 
     @property
     listKey = 'id';
+
+    @property([cc.Node])
+    _itemNodes: cc.Node[][] = [];
+
+    @property([cc.Node])
+    _listNodes: cc.Node[] = [];
 
     @property
     _contentHeight = 0;
@@ -91,6 +94,7 @@ export default class ZListView extends cc.Component {
             currentNode = this.layoutItem(lastIndex, lastY);
             lastIndex += 1;
             lastY = topToBottom ? this.nodeBottom(currentNode) : this.nodeTop(currentNode);
+            lastY += topToBottom ? -this.gap : this.gap;
         } while ((topToBottom
             ? lastY > -this._contentHeight
             : lastY < 0) && lastIndex < this.listData.length)
@@ -308,15 +312,15 @@ export default class ZListView extends cc.Component {
             const addNode = this.popNode(itemData);
             if (isFirst) {
                 if (topToBottom) {
-                    addNode.y = lastY + addNode.height * addNode.anchorY;
+                    addNode.y = lastY + this.gap + addNode.height * addNode.anchorY;
                 } else {
-                    addNode.y = lastY - addNode.height * (1 - addNode.anchorY);
+                    addNode.y = lastY - this.gap - addNode.height * (1 - addNode.anchorY);
                 }
             } else {
                 if (topToBottom) {
-                    addNode.y = lastY - addNode.height * (1 - addNode.anchorY);
+                    addNode.y = lastY - this.gap - addNode.height * (1 - addNode.anchorY);
                 } else {
-                    addNode.y = lastY + addNode.height * addNode.anchorY;
+                    addNode.y = lastY + this.gap + addNode.height * addNode.anchorY;
                 }
             }
             return addNode;
