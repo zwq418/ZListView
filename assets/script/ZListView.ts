@@ -6,7 +6,6 @@ let lastTouchTime = 0;
 let lastSpeed = 0;
 let isTouch = false;
 let isScrolling = false;
-let topToBottom = false;
 let scrollId;
 let scrollDirection = 0;
 let getTimeInMilliseconds = function() {
@@ -23,7 +22,10 @@ export default class ZListView extends cc.Component {
     itemPrefabs: cc.Prefab[] = [];
 
     @property
-    gap = 0;
+    spacing = 0;
+
+    @property
+    topToBottom = true
 
     @property
     listData: any[] = [];
@@ -57,7 +59,7 @@ export default class ZListView extends cc.Component {
     public scrollToIndex(id) {
         const firstId = this._listNodes[0].dataKey;
         const lastId = this._listNodes[this._listNodes.length - 1].dataKey;
-        if (topToBottom) {
+        if (this.topToBottom) {
             if (id < firstId) {
                 scrollDirection = -10;
             } else if (id > lastId) {
@@ -88,22 +90,14 @@ export default class ZListView extends cc.Component {
         const firstNode = this._listNodes[0];
         this._listNodes = [];
         let lastIndex = this.listData.findIndex(item => item[this.listKey] === firstNode.dataKey);
-        let lastY = topToBottom ? this.nodeTop(firstNode) : this.nodeBottom(firstNode);
-        let currentNode;
-        do {
-            currentNode = this.layoutItem(lastIndex, lastY);
-            lastIndex += 1;
-            lastY = topToBottom ? this.nodeBottom(currentNode) : this.nodeTop(currentNode);
-            lastY += topToBottom ? -this.gap : this.gap;
-        } while ((topToBottom
-            ? lastY > -this._contentHeight
-            : lastY < 0) && lastIndex < this.listData.length)
+        let lastY = this.topToBottom ? this.nodeTop(firstNode) : this.nodeBottom(firstNode);
+        this.layoutItems(lastIndex, lastY);
     }
 
     onLoad () {
         this._contentHeight = this.node.height;
         this.preloadItems();
-        this.layoutItems();
+        this.layoutItems(0, this.topToBottom ? 0 : -this._contentHeight);
     }
 
     preloadItems() {
@@ -122,18 +116,9 @@ export default class ZListView extends cc.Component {
         }
     }
 
-    layoutItems() {
-        if (topToBottom) {
-            this.layoutItemTopToBottom();
-        } else {
-            this._contentHeight = this.node.height;
-            this.layoutItemBottomToTop();
-        }
-    }
-
     layoutItem(index, y) {
         const node = this.popNode(this.listData[index]);
-        if (topToBottom) {
+        if (this.topToBottom) {
             node.y = y - node.height * (1 - node.anchorY);
         } else {
             node.y = y + node.height * node.anchorY;
@@ -142,12 +127,16 @@ export default class ZListView extends cc.Component {
         return node;
     }
 
-    layoutItemTopToBottom() {
-        this.layoutItem(0, this._contentHeight * (1 - this.node.anchorY));
-    }
-
-    layoutItemBottomToTop() {
-        this.layoutItem(0, this._contentHeight * -this.node.anchorY);
+    layoutItems(lastIndex, lastY) {
+        let currentNode;
+        do {
+            currentNode = this.layoutItem(lastIndex, lastY);
+            lastIndex += 1;
+            lastY = this.topToBottom ? this.nodeBottom(currentNode) : this.nodeTop(currentNode);
+            lastY += this.topToBottom ? -this.spacing : this.spacing;
+        } while ((this.topToBottom
+            ? lastY > -this._contentHeight
+            : lastY < 0) && lastIndex < this.listData.length)
     }
 
     start () {
@@ -229,8 +218,8 @@ export default class ZListView extends cc.Component {
     scrollChildren (deltaY) {
         const contentHeight = this.node.height;
         if (deltaY < 0) {
-            const firstNode = this._listNodes[topToBottom ? 0 : this._listNodes.length - 1];
-            const overflow = firstNode.dataKey === this.listData[topToBottom ? 0 : this.listData.length - 1][this.listKey];
+            const firstNode = this._listNodes[this.topToBottom ? 0 : this._listNodes.length - 1];
+            const overflow = firstNode.dataKey === this.listData[this.topToBottom ? 0 : this.listData.length - 1][this.listKey];
             const reachId = this.hasScrollId && firstNode.dataKey === scrollId;
             if (overflow || reachId) {
                 const firstNodeTop = this.nodeTop(firstNode);
@@ -242,8 +231,8 @@ export default class ZListView extends cc.Component {
                 }
             }
         } else if (deltaY > 0) {
-            const lastNode = this._listNodes[topToBottom ? this._listNodes.length - 1 : 0];
-            const overflow = lastNode.dataKey === this.listData[topToBottom ? this.listData.length - 1 : 0][this.listKey];
+            const lastNode = this._listNodes[this.topToBottom ? this._listNodes.length - 1 : 0];
+            const overflow = lastNode.dataKey === this.listData[this.topToBottom ? this.listData.length - 1 : 0][this.listKey];
             const reachId = this.hasScrollId && lastNode.dataKey === scrollId;
             if (overflow || reachId) {
                 const lastNodeBottom = this.nodeBottom(lastNode);
@@ -270,7 +259,7 @@ export default class ZListView extends cc.Component {
             const nodeBottom = this.nodeBottom(node);
             const { dataKey, dataType } = node;
             if (i === 0) {
-                if (topToBottom) {
+                if (this.topToBottom) {
                     if (nodeTop < 0) {
                         const addNode = this.addNode(dataKey, node.y + node.height * (1 - node.anchorY), true);
                         addNode && keepNodes.push(addNode);
@@ -288,7 +277,7 @@ export default class ZListView extends cc.Component {
                 this.pushNode(node);
             }
             if (i === this._listNodes.length - 1) {
-                if (topToBottom) {
+                if (this.topToBottom) {
                     if (nodeBottom > -contentHeight) {
                         const addNode = this.addNode(dataKey, node.y - node.height * node.anchorY, false);
                         addNode && keepNodes.push(addNode);
@@ -311,16 +300,16 @@ export default class ZListView extends cc.Component {
             const itemData = this.listData[isFirst ? index - 1 : index + 1];
             const addNode = this.popNode(itemData);
             if (isFirst) {
-                if (topToBottom) {
-                    addNode.y = lastY + this.gap + addNode.height * addNode.anchorY;
+                if (this.topToBottom) {
+                    addNode.y = lastY + this.spacing + addNode.height * addNode.anchorY;
                 } else {
-                    addNode.y = lastY - this.gap - addNode.height * (1 - addNode.anchorY);
+                    addNode.y = lastY - this.spacing - addNode.height * (1 - addNode.anchorY);
                 }
             } else {
-                if (topToBottom) {
-                    addNode.y = lastY - this.gap - addNode.height * (1 - addNode.anchorY);
+                if (this.topToBottom) {
+                    addNode.y = lastY - this.spacing - addNode.height * (1 - addNode.anchorY);
                 } else {
-                    addNode.y = lastY + this.gap + addNode.height * addNode.anchorY;
+                    addNode.y = lastY + this.spacing + addNode.height * addNode.anchorY;
                 }
             }
             return addNode;
