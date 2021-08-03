@@ -7,6 +7,8 @@ let lastSpeed = 0;
 let isTouch = false;
 let isScrolling = false;
 let topToBottom = true;
+let scrollId;
+let scrollDirection = 0;
 let getTimeInMilliseconds = function() {
     let currentTime = new Date();
     return currentTime.getMilliseconds();
@@ -49,24 +51,60 @@ export default class ZListView extends cc.Component {
         this._scrollToBottom = true;
     }
 
-    public scrollToIndex(index) {
+    public scrollToIndex(id) {
+        const firstId = this._listNodes[0].dataKey;
+        const lastId = this._listNodes[this._listNodes.length - 1].dataKey;
+        if (topToBottom) {
+            if (id < firstId) {
+                scrollDirection = -10;
+            } else if (id > lastId) {
+                scrollDirection = 10;
+            } else {
+                scrollDirection = -10;
+            }
+        } else {
+            if (id < firstId) {
+                scrollDirection = 10;
+            } else if (id > lastId) {
+                scrollDirection = -10;
+            } else {
+                scrollDirection = 10;
+            }
+        }
+        scrollId = id;
+    }
 
+    hasScrollId() {
+        return typeof scrollId != 'undefined';
     }
 
     public notifyDataChanged() {
         if (topToBottom) {
             let firstIndex;
-            let firstBottom = 0;
+            let firstTop = 0;
             for (let i = this._listNodes.length - 1; i >= 0; i--) {
                 if (i === 0) {
                     const firstNode = this._listNodes[i];
                     firstIndex = this.listData.findIndex(item => item[this.listKey] === firstNode.dataKey);
-                    firstBottom = this.nodeTop(firstNode);
+                    firstTop = this.nodeTop(firstNode);
                 }
                 this.pushNode(this._listNodes[i]);
             }
             this._listNodes = [];
-            this.layoutItem(firstIndex, firstBottom);
+            this.layoutItem(firstIndex, firstTop);
+        } else {
+            let lastIndex;
+            let lastBottom = 0;
+            for (let i = this._listNodes.length - 1; i >= 0; i--) {
+                if (i === 0) {
+                    const lastNode = this._listNodes[i];
+                    lastIndex = this.listData.findIndex(item => item[this.listKey] === lastNode.dataKey);
+                    lastBottom = this.nodeBottom(lastNode);
+                }
+                this.pushNode(this._listNodes[i]);
+            }
+            this._listNodes = [];
+            this.layoutItem(lastIndex, lastBottom);
         }
     }
 
@@ -116,7 +154,7 @@ export default class ZListView extends cc.Component {
     }
 
     layoutItemBottomToTop() {
-        this.layoutItem(this.listData.length - 1, this._contentHeight * -this.node.anchorY);
+        this.layoutItem(0, this._contentHeight * -this.node.anchorY);
     }
 
     start () {
@@ -135,6 +173,8 @@ export default class ZListView extends cc.Component {
             this.scrollChildren(dt * -10 * 1000);
         } else if (this._scrollToBottom) {
             this.scrollChildren(dt * 10 * 1000);
+        } else if (this.hasScrollId()) {
+            this.scrollChildren(dt * scrollDirection * 1000);
         } else {
             this.scrollChildren(0);
         }
@@ -196,20 +236,29 @@ export default class ZListView extends cc.Component {
     scrollChildren (deltaY) {
         const contentHeight = this.node.height;
         if (deltaY < 0) {
-            const firstNode = this._listNodes[0];
-            // todo topToBottom
-            if (firstNode.dataKey === this.listData[0][this.listKey]) {
+            const firstNode = this._listNodes[topToBottom ? 0 : this._listNodes.length - 1];
+            const overflow = firstNode.dataKey === this.listData[topToBottom ? 0 : this.listData.length - 1][this.listKey];
+            const reachId = this.hasScrollId && firstNode.dataKey === scrollId;
+            if (overflow || reachId) {
                 const firstNodeTop = this.nodeTop(firstNode);
                 if (firstNodeTop + deltaY < 0) {
                     deltaY = -firstNodeTop;
                 }
+                if (reachId) {
+                    scrollId = undefined;
+                }
             }
         } else if (deltaY > 0) {
-            const lastNode = this._listNodes[this._listNodes.length - 1];
-            if (lastNode.dataKey === this.listData[this.listData.length - 1][this.listKey]) {
+            const lastNode = this._listNodes[topToBottom ? this._listNodes.length - 1 : 0];
+            const overflow = lastNode.dataKey === this.listData[topToBottom ? this.listData.length - 1 : 0][this.listKey];
+            const reachId = this.hasScrollId && lastNode.dataKey === scrollId;
+            if (overflow || reachId) {
                 const lastNodeBottom = this.nodeBottom(lastNode);
                 if (lastNodeBottom + deltaY > -contentHeight) {
                     deltaY = -lastNodeBottom - contentHeight;
+                }
+                if (reachId) {
+                    scrollId = undefined;
                 }
             }
         }
@@ -230,23 +279,13 @@ export default class ZListView extends cc.Component {
             if (i === 0) {
                 if (topToBottom) {
                     if (nodeTop < 0) {
-                        const index = this.listData.findIndex(item => item[this.listKey] === dataKey);
-                        if (index > 0) {
-                            const itemData = this.listData[index - 1];
-                            const addNode = this.popNode(itemData);
-                            addNode.y = node.y + node.height * (1 - node.anchorY) + addNode.height * addNode.anchorY;
-                            keepNodes.push(addNode);
-                        }
+                        const addNode = this.addNode(dataKey, node.y + node.height * (1 - node.anchorY), true);
+                        addNode && keepNodes.push(addNode);
                     }
                 } else {
                     if (nodeBottom > -this._contentHeight) {
-                        const index = this.listData.findIndex(item => item[this.listKey] === dataKey);
-                        if (index > 0) {
-                            const itemData = this.listData[index - 1];
-                            const addNode = this.popNode(itemData);
-                            addNode.y = node.y - node.height * node.anchorY - addNode.height * (1 - addNode.anchorY);
-                            keepNodes.push(addNode);
-                        }
+                        const addNode = this.addNode(dataKey, node.y - node.height * node.anchorY, true);
+                        addNode && keepNodes.push(addNode);
                     }
                 }
             }
@@ -255,19 +294,44 @@ export default class ZListView extends cc.Component {
             } else {
                 this.pushNode(node);
             }
-            // topToBottom
-            if (i === this._listNodes.length - 1 && nodeBottom > -contentHeight) {
-                const index = this.listData.findIndex(item => item[this.listKey] === dataKey);
-                if (index < this.listData.length - 1) {
-                    const itemData = this.listData[index + 1];
-                    const addNode = this.popNode(itemData);
-                    addNode.y = node.y - node.height * node.anchorY - addNode.height * (1 - addNode.anchorY);
-                    keepNodes.push(addNode);
+            if (i === this._listNodes.length - 1) {
+                if (topToBottom) {
+                    if (nodeBottom > -contentHeight) {
+                        const addNode = this.addNode(dataKey, node.y - node.height * node.anchorY, false);
+                        addNode && keepNodes.push(addNode);
+                    }
+                } else {
+                    if (nodeTop < 0) {
+                        const addNode = this.addNode(dataKey, node.y + node.height * (1 - node.anchorY), false);
+                        addNode && keepNodes.push(addNode);
+                    }
                 }
             }
         }
         this._listNodes = keepNodes;
 
+    }
+
+    addNode(dataKey, lastY, isFirst) {
+        const index = this.listData.findIndex(item => item[this.listKey] === dataKey);
+        if (isFirst ? index > 0 : index < this.listData.length - 1) {
+            const itemData = this.listData[isFirst ? index - 1 : index + 1];
+            const addNode = this.popNode(itemData);
+            if (isFirst) {
+                if (topToBottom) {
+                    addNode.y = lastY + addNode.height * addNode.anchorY;
+                } else {
+                    addNode.y = lastY - addNode.height * (1 - addNode.anchorY);
+                }
+            } else {
+                if (topToBottom) {
+                    addNode.y = lastY - addNode.height * (1 - addNode.anchorY);
+                } else {
+                    addNode.y = lastY + addNode.height * addNode.anchorY;
+                }
+            }
+            return addNode;
+        }
     }
 
     nodeTop(node) {
@@ -288,7 +352,7 @@ export default class ZListView extends cc.Component {
             node.dataType = type;
         }
         this._itemNodes[node.dataType].push(node);
-        console.log('pushNode:', node.dataType, this._itemNodes[node.dataType].length);
+        // console.log('pushNode:', node.dataType, this._itemNodes[node.dataType].length);
     }
 
     popNode(itemData) {
@@ -297,7 +361,7 @@ export default class ZListView extends cc.Component {
         node.opacity = 255;
         node.dataKey = itemData[this.listKey];
         node.getComponent(ZListItem).data = itemData;
-        console.log('popNode:', node.dataType, this._itemNodes[node.dataType].length);
+        // console.log('popNode:', node.dataType, this._itemNodes[node.dataType].length);
         return node;
     }
 }

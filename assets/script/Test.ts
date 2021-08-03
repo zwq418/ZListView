@@ -101,6 +101,6 @@ export default class TestScene extends cc.Component {
     }
 
     public to10() {
-        this.listView;
+        this.listView.scrollToIndex(10);
     }
 }
