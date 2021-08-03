@@ -79,33 +79,21 @@ export default class ZListView extends cc.Component {
     }
 
     public notifyDataChanged() {
-        if (topToBottom) {
-            let firstIndex;
-            let firstTop = 0;
-            for (let i = this._listNodes.length - 1; i >= 0; i--) {
-                if (i === 0) {
-                    const firstNode = this._listNodes[i];
-                    firstIndex = this.listData.findIndex(item => item[this.listKey] === firstNode.dataKey);
-                    firstTop = this.nodeTop(firstNode);
-                }
-                this.pushNode(this._listNodes[i]);
-            }
-            this._listNodes = [];
-            this.layoutItem(firstIndex, firstTop);
-        } else {
-            let lastIndex;
-            let lastBottom = 0;
-            for (let i = this._listNodes.length - 1; i >= 0; i--) {
-                if (i === 0) {
-                    const lastNode = this._listNodes[i];
-                    lastIndex = this.listData.findIndex(item => item[this.listKey] === lastNode.dataKey);
-                    lastBottom = this.nodeBottom(lastNode);
-                }
-                this.pushNode(this._listNodes[i]);
-            }
-            this._listNodes = [];
-            this.layoutItem(lastIndex, lastBottom);
+        for (let i = this._listNodes.length - 1; i >= 0; i--) {
+            this.pushNode(this._listNodes[i]);
         }
+        const firstNode = this._listNodes[0];
+        this._listNodes = [];
+        let lastIndex = this.listData.findIndex(item => item[this.listKey] === firstNode.dataKey);
+        let lastY = topToBottom ? this.nodeTop(firstNode) : this.nodeBottom(firstNode);
+        let currentNode;
+        do {
+            currentNode = this.layoutItem(lastIndex, lastY);
+            lastIndex += 1;
+            lastY = topToBottom ? this.nodeBottom(currentNode) : this.nodeTop(currentNode);
+        } while ((topToBottom
+            ? lastY > -this._contentHeight
+            : lastY < 0) && lastIndex < this.listData.length)
     }
 
     onLoad () {
@@ -147,6 +135,7 @@ export default class ZListView extends cc.Component {
             node.y = y + node.height * node.anchorY;
         }
         this._listNodes.push(node);
+        return node;
     }
 
     layoutItemTopToBottom() {
