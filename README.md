@@ -49,7 +49,7 @@ listKey = 'id';
 listType = 'type'
 
 ZListItem
-所以item必须继承改类，实现
+所有item必须继承改类，实现
 renderData
 或者
 set itemData
