@@ -65,39 +65,63 @@ export default class TestScene extends cc.Component {
     }
 
     public bottomAdd1() {
-        this.addData(this.listData.length - 1, 1);
+        if (this.listView.topToBottom) {
+            this.addData(this.listData.length - 1, 1);
+        } else {
+            this.addData(0, -1);
+        }
         this.listView.scrollToBottom();
     }
 
     public bottomAdd10() {
         for (let i = 0; i < 10; i++) {
-            this.addData(this.listData.length - 1, 1);
+            if (this.listView.topToBottom) {
+                this.addData(this.listData.length - 1, 1);
+            } else {
+                this.addData(0, -1);
+            }
         }
         this.listView.scrollToBottom();
     }
 
     public topAdd1() {
-        this.addData(0, -1);
+        if (this.listView.topToBottom) {
+            this.addData(0, -1);
+        } else {
+            this.addData(this.listData.length - 1, 1);
+        }
         this.listView.scrollToTop();
     }
 
     public topAdd10() {
         for (let i = 0; i < 10; i++) {
-            this.addData(0, -1);
+            if (this.listView.topToBottom) {
+                this.addData(0, -1);
+            } else {
+                this.addData(this.listData.length - 1, 1);
+            }
         }
         this.listView.scrollToTop();
     }
 
     public tenAdd1() {
-        this.addData(10, 1);
-        this.listView.notifyDataChanged();
+        if (this.listData.length > 10) {
+            this.addData(10, 1);
+            this.listView.notifyDataChanged();
+        } else {
+            console.log('没有10条数据，中间插入数据失败');
+        }
     }
 
     public tenAdd10() {
-        for (let i = 0; i < 10; i++) {
-            this.addData(10 + i, 1);
+        if (this.listData.length > 10) {
+            for (let i = 0; i < 10; i++) {
+                this.addData(10 + i, 1);
+            }
+            this.listView.notifyDataChanged();
+        } else {
+            console.log('没有10条数据，中间插入数据失败');
         }
-        this.listView.notifyDataChanged();
     }
 
     public to10() {
