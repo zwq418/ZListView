@@ -93,9 +93,9 @@ export default class ZListView extends cc.Component {
         this._contentHeight = this.node.height;
         this.preloadItems();
         if (this.topToBottom) {
-            this.layoutItems(0, 0);
+            this.layoutItems(0, this.listTop());
         } else {
-            this.layoutItems(this.listData.length - 1, -this._contentHeight);
+            this.layoutItems(this.listData.length - 1, this.listBottom() + 1);
             this.scheduleOnce(this.scrollToBottom);
         }
     }
@@ -130,7 +130,7 @@ export default class ZListView extends cc.Component {
             lastIndex += 1;
             lastY = this.nodeBottom(currentNode);
             lastY += -this.spacing;
-        } while (lastIndex < this.listData.length - 1 && lastY > -this._contentHeight)
+        } while (lastIndex < this.listData.length - 1 && lastY > this.listBottom())
     }
 
     start () {
@@ -211,15 +211,15 @@ export default class ZListView extends cc.Component {
 
     scrollChildren (deltaY) {
         // console.log(deltaY);
-        const contentHeight = this.node.height;
+        this._contentHeight = this._contentHeight || this.node.height;
         if (deltaY < 0) {
             const firstNode = this._listNodes[0];
             const overflow = firstNode.name == this.listData[0][this.listKey];
             const reachId = this.hasScrollId() && firstNode.name == scrollId;
             if (overflow || reachId) {
                 const firstNodeTop = this.nodeTop(firstNode);
-                if (firstNodeTop + deltaY < 0) {
-                    deltaY = -firstNodeTop;
+                if (firstNodeTop + deltaY < this.listTop()) {
+                    deltaY = -firstNodeTop + this.listTop();
                 }
                 if (reachId) {
                     scrollId = undefined;
@@ -231,8 +231,8 @@ export default class ZListView extends cc.Component {
             const reachId = this.hasScrollId() && lastNode.name == scrollId;
             if (overflow || reachId) {
                 const lastNodeBottom = this.nodeBottom(lastNode);
-                if (lastNodeBottom + deltaY > -contentHeight) {
-                    deltaY = -lastNodeBottom - contentHeight;
+                if (lastNodeBottom + deltaY > this.listBottom()) {
+                    deltaY = -lastNodeBottom + this.listBottom();
                 }
                 if (reachId) {
                     scrollId = undefined;
@@ -253,16 +253,16 @@ export default class ZListView extends cc.Component {
             const nodeTop = this.nodeTop(node);
             const nodeBottom = this.nodeBottom(node);
             const { name } = node;
-            if (i === 0 && nodeTop < 0) {
+            if (i === 0 && nodeTop < this.listTop()) {
                 const addNode = this.addNode(name, node.y + node.height * (1 - node.anchorY), true);
                 addNode && keepNodes.push(addNode);
             }
-            if (nodeBottom <= 0 && nodeTop >= -contentHeight ) {
+            if (nodeBottom <= this.listTop() && nodeTop >= this.listBottom()) {
                 keepNodes.push(node);
             } else {
                 this.pushNode(node);
             }
-            if (i === this._listNodes.length - 1 && nodeBottom > -contentHeight) {
+            if (i === this._listNodes.length - 1 && nodeBottom > this.listBottom()) {
                 const addNode = this.addNode(name, node.y - node.height * node.anchorY, false);
                 addNode && keepNodes.push(addNode);
             }
@@ -273,9 +273,9 @@ export default class ZListView extends cc.Component {
                 const index = this.listData.findIndex(item => item[this.listKey] == scrollId);
                 this.layoutItem(index, 0);
             } else if (deltaY < 0) {
-                this.layoutItem(0, 0);
+                this.layoutItem(0, this.listTop());
             } else if (deltaY > 0) {
-                this.layoutItem(this.listData.length - 1, -this._contentHeight);
+                this.layoutItem(this.listData.length - 1, this.listBottom());
             }
         }
     }
@@ -290,13 +290,21 @@ export default class ZListView extends cc.Component {
             } else {
                 addNode.y = lastY - this.spacing - addNode.height * (1 - addNode.anchorY);
             }
-            if (this.nodeBottom(addNode) <= 0 && this.nodeTop(addNode) >= -this._contentHeight) {
+            if (this.nodeBottom(addNode) <= this.listTop() && this.nodeTop(addNode) >= this.listBottom()) {
                 return addNode;
             } else {
                 this.pushNode(addNode);
                 return null;
             }
         }
+    }
+
+    listTop() {
+        return (1 - this.node.anchorY) * this.node.height;
+    }
+
+    listBottom() {
+        return -this.node.anchorY * this.node.height;
     }
 
     nodeTop(node) {
