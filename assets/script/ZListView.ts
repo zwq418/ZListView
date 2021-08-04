@@ -107,7 +107,7 @@ export default class ZListView extends cc.Component {
     }
 
     layoutItem(index, y) {
-        const node = this.popNode(this.listData[index]);
+        const node = this.popNode(index);
         node.y = y - node.height * (1 - node.anchorY);
         this._listNodes.push(node);
         return node;
@@ -262,8 +262,7 @@ export default class ZListView extends cc.Component {
     addNode(dataKey, lastY, isFirst) {
         const index = this.listData.findIndex(item => item[this.listKey] == dataKey);
         if (isFirst ? index > 0 : index < this.listData.length - 1) {
-            const itemData = this.listData[isFirst ? index - 1 : index + 1];
-            const addNode = this.popNode(itemData);
+            const addNode = this.popNode(isFirst ? index - 1 : index + 1);
             if (isFirst) {
                 addNode.y = lastY + this.spacing + addNode.height * addNode.anchorY;
             } else {
@@ -308,12 +307,13 @@ export default class ZListView extends cc.Component {
         // console.log('pushNode:', node.dataType, this._itemNodes[node.dataType].length);
     }
 
-    popNode(itemData) {
+    popNode(index) {
+        const itemData = this.listData[index];
         const node = this._itemNodes[itemData[this.listType]].pop();
         node.x = 0;
         node.opacity = 255;
         node.name = itemData[this.listKey].toString();
-        node.getComponent(ZListItem).data = itemData;
+        node.getComponent(ZListItem).renderData(itemData, index, this.listData);
         // console.log('popNode:', node.dataType, this._itemNodes[node.dataType].length);
         return node;
     }

@@ -11,11 +11,23 @@ const {ccclass, property} = cc._decorator;
 export default class ZListItem extends cc.Component {
 
     @property
-    _data: any = null;
-    get data() {
-        return this._data;
+    _itemData: any = null;
+    get itemData() {
+        return this._itemData;
     }
-    set data(value) {
-        this._data = value;
+    set itemData(value) {
+        this._itemData = value;
+    }
+
+    @property
+    index: number;
+
+    @property
+    listData: any[];
+
+    public renderData(itemData: any, index: number, listData: any[]) {
+        this.listData = listData;
+        this.index = index;
+        this.itemData = itemData;
     }
 }

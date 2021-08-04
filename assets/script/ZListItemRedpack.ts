@@ -21,8 +21,7 @@ export default class ZListItemRedpack extends ZListItem{
     @property(cc.Label)
     messageLabel: cc.Label = null;
 
-    set data(value) {
-        super.data = value;
+    set itemData(value) {
         const { id, avatar } = value;
         this.loadAvatar(avatar);
         this.nameLabel.string = `用户${id}`;
