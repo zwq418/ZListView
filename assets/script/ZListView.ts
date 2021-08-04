@@ -44,9 +44,6 @@ export default class ZListView extends cc.Component {
     _listNodes: cc.Node[] = [];
 
     @property
-    _contentHeight = 0;
-
-    @property
     _scrollToTop = false;
 
     @property
@@ -90,7 +87,6 @@ export default class ZListView extends cc.Component {
     }
 
     onLoad () {
-        this._contentHeight = this.node.height;
         this.preloadItems();
         if (this.topToBottom) {
             this.layoutItems(0, this.listTop());
@@ -109,7 +105,7 @@ export default class ZListView extends cc.Component {
                 this.node.addChild(node);
                 this.pushNode(node, i);
                 itemsHeight += node.height;
-                if (itemsHeight >= this._contentHeight + 2 * node.height) {
+                if (itemsHeight >= this.node.height + 2 * node.height) {
                     break;
                 }
             }
@@ -210,8 +206,6 @@ export default class ZListView extends cc.Component {
     }
 
     scrollChildren (deltaY) {
-        // console.log(deltaY);
-        this._contentHeight = this._contentHeight || this.node.height;
         if (deltaY < 0) {
             const firstNode = this._listNodes[0];
             const overflow = firstNode.name == this.listData[0][this.listKey];
