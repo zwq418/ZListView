@@ -471,6 +471,7 @@
     "topToBottom": true,
     "listData": [],
     "listKey": "id",
+    "listType": "type",
     "_itemNodes": [],
     "_listNodes": [],
     "_contentHeight": 0,
