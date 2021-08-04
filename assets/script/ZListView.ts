@@ -49,14 +49,14 @@ export default class ZListView extends cc.Component {
 
     @property({
         type: cc.String,
-        tooltip: '列表数据唯一标识',
+        tooltip: '列表数据唯一标识的参数名',
         visible: true,
     })
     listKey = 'id';
 
     @property({
         type: cc.String,
-        tooltip: '列表数据组件类型',
+        tooltip: '列表数据组件类型的参数名',
         visible: true,
     })
     listType = 'type'
