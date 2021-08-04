@@ -43,21 +43,15 @@ export default class ZListView extends cc.Component {
     @property([cc.Node])
     _listNodes: cc.Node[] = [];
 
-    @property
-    _scrollToTop = false;
-
-    @property
-    _scrollToBottom = false;
-
     public scrollToTop() {
-        this._scrollToTop = true;
+        this.scrollToId(this.listData[0][this.listKey]);
     }
 
     public scrollToBottom() {
-        this._scrollToBottom = true;
+        this.scrollToId(this.listData[this.listData.length - 1][this.listKey]);
     }
 
-    public scrollToIndex(id) {
+    public scrollToId(id) {
         const firstId = this._listNodes[0].name;
         const lastId = this._listNodes[this._listNodes.length - 1].name;
         if (id < firstId) {
@@ -141,10 +135,6 @@ export default class ZListView extends cc.Component {
                 lastSpeed = 0;
             }
             this.scrollChildren(dt * lastSpeed * 1000);
-        } else if (this._scrollToTop) {
-            this.scrollChildren(dt * -MAX_SPEED * 1000);
-        } else if (this._scrollToBottom) {
-            this.scrollChildren(dt * MAX_SPEED * 1000);
         } else if (this.hasScrollId()) {
             this.scrollChildren(dt * scrollDirection * 1000);
         } else {
@@ -233,11 +223,6 @@ export default class ZListView extends cc.Component {
                 }
             }
         }
-        if (deltaY === 0) {
-            this._scrollToTop = false;
-            this._scrollToBottom = false;
-            // return;
-        };
         for (let i = 0; i < this._listNodes.length; i++) {
             this._listNodes[i].y += deltaY;
         }

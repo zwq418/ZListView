@@ -64,6 +64,10 @@ export default class TestScene extends cc.Component {
         this.listView.scrollToBottom();
     }
 
+    public to10() {
+        this.listView.scrollToId(10);
+    }
+
     public bottomAdd1() {
         this.addData(this.listData.length - 1, 1);
         this.listView.scrollToBottom();
@@ -106,9 +110,5 @@ export default class TestScene extends cc.Component {
         } else {
             console.log('没有10条数据，中间插入数据失败');
         }
-    }
-
-    public to10() {
-        this.listView.scrollToIndex(10);
     }
 }
