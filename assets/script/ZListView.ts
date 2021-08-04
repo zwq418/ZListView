@@ -70,13 +70,13 @@ export default class ZListView extends cc.Component {
     }
 
     public notifyDataChanged() {
+        const firstNode = this._listNodes[0];
+        let lastIndex = this.listData.findIndex(item => item[this.listKey] == firstNode.name);
+        let lastY = this.nodeTop(firstNode);
         for (let i = this._listNodes.length - 1; i >= 0; i--) {
             this.pushNode(this._listNodes[i]);
         }
-        const firstNode = this._listNodes[0];
         this._listNodes = [];
-        let lastIndex = this.listData.findIndex(item => item[this.listKey] == firstNode.name);
-        let lastY = this.nodeTop(firstNode);
         this.layoutItems(lastIndex, lastY);
     }
 
