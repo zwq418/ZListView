@@ -19,22 +19,46 @@ export default class ZListView extends cc.Component {
 
     // LIFE-CYCLE CALLBACKS:
 
-    @property([cc.Prefab])
+    @property({
+        type: [cc.Prefab],
+        tooltip: '不同样式的item',
+        visible: true,
+    })
     itemPrefabs: cc.Prefab[] = [];
 
-    @property
+    @property({
+        type: cc.Integer,
+        tooltip: '间距',
+        visible: true,
+    })
     spacing = 0;
 
-    @property
+    @property({
+        type: cc.Boolean,
+        tooltip: '从队首开始排版/从队尾开始排版',
+        visible: true,
+    })
     topToBottom = true
 
-    @property
+    @property({
+        type: [cc.Object],
+        tooltip: '列表数据',
+        visible: true,
+    })
     listData: any[] = [];
 
-    @property
+    @property({
+        type: cc.String,
+        tooltip: '列表数据唯一标识',
+        visible: true,
+    })
     listKey = 'id';
 
-    @property
+    @property({
+        type: cc.String,
+        tooltip: '列表数据组件类型',
+        visible: true,
+    })
     listType = 'type'
 
     @property([cc.Node])
