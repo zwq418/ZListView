@@ -2,7 +2,7 @@ import ZListItem from "./ZListItem";
 
 const {ccclass, property} = cc._decorator;
 
-const MAX_SPEED = 30;
+const MAX_SPEED = 20;
 let lastTouchTime = 0;
 let lastSpeed = 0;
 let isTouch = false;
@@ -61,8 +61,8 @@ export default class ZListView extends cc.Component {
     }
 
     public scrollToIndex(id) {
-        const firstId = this._listNodes[0].dataKey;
-        const lastId = this._listNodes[this._listNodes.length - 1].dataKey;
+        const firstId = this._listNodes[0].name;
+        const lastId = this._listNodes[this._listNodes.length - 1].name;
         if (id < firstId) {
             scrollDirection = -MAX_SPEED;
             scrollId = id;
@@ -84,7 +84,7 @@ export default class ZListView extends cc.Component {
         }
         const firstNode = this._listNodes[0];
         this._listNodes = [];
-        let lastIndex = this.listData.findIndex(item => item[this.listKey] === firstNode.dataKey);
+        let lastIndex = this.listData.findIndex(item => item[this.listKey] == firstNode.name);
         let lastY = this.nodeTop(firstNode);
         this.layoutItems(lastIndex, lastY);
     }
@@ -214,8 +214,8 @@ export default class ZListView extends cc.Component {
         const contentHeight = this.node.height;
         if (deltaY < 0) {
             const firstNode = this._listNodes[0];
-            const overflow = firstNode.dataKey === this.listData[0][this.listKey];
-            const reachId = this.hasScrollId() && firstNode.dataKey === scrollId;
+            const overflow = firstNode.name == this.listData[0][this.listKey];
+            const reachId = this.hasScrollId() && firstNode.name == scrollId;
             if (overflow || reachId) {
                 const firstNodeTop = this.nodeTop(firstNode);
                 if (firstNodeTop + deltaY < 0) {
@@ -227,8 +227,8 @@ export default class ZListView extends cc.Component {
             }
         } else if (deltaY > 0) {
             const lastNode = this._listNodes[this._listNodes.length - 1];
-            const overflow = lastNode.dataKey === this.listData[this.listData.length - 1][this.listKey];
-            const reachId = this.hasScrollId() && lastNode.dataKey === scrollId;
+            const overflow = lastNode.name == this.listData[this.listData.length - 1][this.listKey];
+            const reachId = this.hasScrollId() && lastNode.name == scrollId;
             if (overflow || reachId) {
                 const lastNodeBottom = this.nodeBottom(lastNode);
                 if (lastNodeBottom + deltaY > -contentHeight) {
@@ -252,9 +252,9 @@ export default class ZListView extends cc.Component {
             const node = this._listNodes[i];
             const nodeTop = this.nodeTop(node);
             const nodeBottom = this.nodeBottom(node);
-            const { dataKey } = node;
+            const { name } = node;
             if (i === 0 && nodeTop < 0) {
-                const addNode = this.addNode(dataKey, node.y + node.height * (1 - node.anchorY), true);
+                const addNode = this.addNode(name, node.y + node.height * (1 - node.anchorY), true);
                 addNode && keepNodes.push(addNode);
             }
             if (nodeBottom <= 0 && nodeTop >= -contentHeight ) {
@@ -263,14 +263,14 @@ export default class ZListView extends cc.Component {
                 this.pushNode(node);
             }
             if (i === this._listNodes.length - 1 && nodeBottom > -contentHeight) {
-                const addNode = this.addNode(dataKey, node.y - node.height * node.anchorY, false);
+                const addNode = this.addNode(name, node.y - node.height * node.anchorY, false);
                 addNode && keepNodes.push(addNode);
             }
         }
         this._listNodes = keepNodes;
         if (keepNodes.length === 0) {
             if (this.hasScrollId()) {
-                const index = this.listData.findIndex(item => item[this.listKey] === scrollId);
+                const index = this.listData.findIndex(item => item[this.listKey] == scrollId);
                 this.layoutItem(index, 0);
             } else if (deltaY < 0) {
                 this.layoutItem(0, 0);
@@ -281,7 +281,7 @@ export default class ZListView extends cc.Component {
     }
 
     addNode(dataKey, lastY, isFirst) {
-        const index = this.listData.findIndex(item => item[this.listKey] === dataKey);
+        const index = this.listData.findIndex(item => item[this.listKey] == dataKey);
         if (isFirst ? index > 0 : index < this.listData.length - 1) {
             const itemData = this.listData[isFirst ? index - 1 : index + 1];
             const addNode = this.popNode(itemData);
@@ -310,6 +310,7 @@ export default class ZListView extends cc.Component {
     pushNode(node: cc.Node, type?) {
         node.x = 1000;
         node.opacity = 0;
+        node.name = '';
         if (typeof node.dataType === 'undefined') {
             if (typeof type === 'undefined') {
                 throw new Error('没有设置节点type');
@@ -324,7 +325,7 @@ export default class ZListView extends cc.Component {
         const node = this._itemNodes[itemData[this.listType]].pop();
         node.x = 0;
         node.opacity = 255;
-        node.dataKey = itemData[this.listKey];
+        node.name = itemData[this.listKey].toString();
         node.getComponent(ZListItem).data = itemData;
         // console.log('popNode:', node.dataType, this._itemNodes[node.dataType].length);
         return node;
