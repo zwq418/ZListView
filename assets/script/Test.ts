@@ -31,7 +31,7 @@ export default class TestScene extends cc.Component {
     listData: any[] = [];
 
     onLoad() {
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 5; i++) {
             this.listData.push({
                 id: i,
                 type: i % 2,
@@ -70,26 +70,26 @@ export default class TestScene extends cc.Component {
 
     public bottomAdd1() {
         this.addData(this.listData.length - 1, 1);
-        this.listView.scrollToBottom();
+        // this.listView.scrollToBottom();
     }
 
     public bottomAdd10() {
         for (let i = 0; i < 10; i++) {
             this.addData(this.listData.length - 1, 1);
         }
-        this.listView.scrollToBottom();
+        // this.listView.scrollToBottom();
     }
 
     public topAdd1() {
         this.addData(0, -1);
-        this.listView.scrollToTop();
+        // this.listView.scrollToTop();
     }
 
     public topAdd10() {
         for (let i = 0; i < 10; i++) {
             this.addData(0, -1);
         }
-        this.listView.scrollToTop();
+        // this.listView.scrollToTop();
     }
 
     public tenAdd1() {

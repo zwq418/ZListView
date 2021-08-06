@@ -76,11 +76,11 @@ export default class ZListView extends cc.Component {
     }
 
     public scrollToId(id) {
-        if (id < this._listNodes[0].name) {
-            scrollDirection = -MAX_SPEED;
-            scrollId = id;
-        } else {
-            scrollDirection = MAX_SPEED;
+        const targetIndex = this.listData.findIndex(item => item[this.listKey] == id);
+        const currentIndex = this.listData.findIndex(item => item[this.listKey] == this._listNodes[Math.round(this._listNodes.length / 2)].name);
+        if (targetIndex != currentIndex) {
+            const rate = (targetIndex - currentIndex) / 30;
+            scrollDirection = Math.max(Math.min(rate, 1), -1) * MAX_SPEED;
             scrollId = id;
         }
     }
@@ -148,7 +148,7 @@ export default class ZListView extends cc.Component {
 
     update (dt) {
         if (!isTouch && isScrolling) {
-            if (Math.abs(lastSpeed) > 0.1) {
+            if (Math.abs(lastSpeed) > 1) {
                 lastSpeed *= (1 - 5 *dt);
             } else {
                 isScrolling = false;
@@ -217,20 +217,7 @@ export default class ZListView extends cc.Component {
 
     scrollChildren (deltaY) {
         deltaY != 0 && console.log(deltaY);
-        if (deltaY < 0) {
-            deltaY = this.fixTopNode(deltaY, this.listData[0][this.listKey], 0);
-        } else if (deltaY > 0) {
-            deltaY = this.fixLastNode(deltaY, this.listData[this.listData.length - 1][this.listKey]);
-            deltaY = this.fixTopNode(deltaY, this.listData[0][this.listKey], 0);
-        }
-        if (this.hasScrollId()) {
-            for (let i = 0; i < this._listNodes.length; i++) {
-                deltaY = this.fixTopNode(deltaY, scrollId, i);
-            }
-            deltaY = this.fixLastNode(deltaY, this.listData[this.listData.length - 1][this.listKey]);
-            deltaY = this.fixTopNode(deltaY, this._listNodes[0][this.listKey], 0);
-        }
-        deltaY != 0 && console.log(deltaY);
+        deltaY = this.fixDeltaY(deltaY);
         for (let i = 0; i < this._listNodes.length; i++) {
             this._listNodes[i].y += deltaY;
         }
@@ -267,16 +254,42 @@ export default class ZListView extends cc.Component {
         }
     }
 
+    fixDeltaY(deltaY) {
+        if (deltaY < 0) {
+            deltaY = this.fixTopNode(deltaY, this.listData[0][this.listKey], 0);
+        } else if (deltaY > 0) {
+            deltaY = this.fixLastNode(deltaY, this.listData[this.listData.length - 1][this.listKey]);
+            deltaY = this.fixTopNode(deltaY, this.listData[0][this.listKey], 0);
+        }
+        if (this.hasScrollId()) {
+            for (let i = 0; i < this._listNodes.length; i++) {
+                const node = this._listNodes[i];
+                if (node.name == scrollId) {
+                    const nodeTop = this.nodeTop(node);
+                    if (deltaY != 0) {
+                        if (nodeTop + deltaY < this.listTop()) {
+                            deltaY = -nodeTop + this.listTop();
+                            scrollId = undefined;
+                            if (deltaY > 0) {
+                                deltaY = this.fixLastNode(deltaY, this.listData[this.listData.length - 1][this.listKey]);
+                            }
+                        }
+                    } else {
+                        scrollId = undefined;
+                    }
+                    break;
+                }
+            }
+        }
+        return deltaY;
+    }
+
     fixTopNode(deltaY: number, id: string, nodeIndex: number) {
         const firstNode = this._listNodes[nodeIndex];
         if (firstNode.name == id) {
             const firstNodeTop = this.nodeTop(firstNode);
             if (firstNodeTop + deltaY < this.listTop()) {
                 deltaY = -firstNodeTop + this.listTop();
-                console.log(deltaY);
-            }
-            if (scrollId === id) {
-                scrollId = undefined;
             }
         }
         return deltaY;
@@ -288,9 +301,6 @@ export default class ZListView extends cc.Component {
             const lastNodeBottom = this.nodeBottom(lastNode);
             if (lastNodeBottom + deltaY > this.listBottom()) {
                 deltaY = -lastNodeBottom + this.listBottom();
-            }
-            if (scrollId === id) {
-                scrollId = undefined;
             }
         }
         return deltaY;
