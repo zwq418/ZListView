@@ -148,7 +148,7 @@ export default class ZListView extends cc.Component {
 
     update (dt) {
         if (!isTouch && isScrolling) {
-            if (Math.abs(lastSpeed) > 1) {
+            if (Math.abs(lastSpeed) > 0.1) {
                 lastSpeed *= (1 - 5 *dt);
             } else {
                 isScrolling = false;
@@ -216,7 +216,7 @@ export default class ZListView extends cc.Component {
     }
 
     scrollChildren (deltaY) {
-        deltaY != 0 && console.log(deltaY);
+        // deltaY != 0 && console.log(deltaY);
         deltaY = this.fixDeltaY(deltaY);
         for (let i = 0; i < this._listNodes.length; i++) {
             this._listNodes[i].y += deltaY;
@@ -227,7 +227,7 @@ export default class ZListView extends cc.Component {
             const nodeTop = this.nodeTop(node);
             const nodeBottom = this.nodeBottom(node);
             const { name } = node;
-            if (i === 0 && nodeTop < this.listTop()) {
+            if (i === 0 && nodeTop + this.spacing < this.listTop()) {
                 const addNode = this.addNode(name, node.y + node.height * (1 - node.anchorY), true);
                 addNode && keepNodes.push(addNode);
             }
@@ -236,7 +236,7 @@ export default class ZListView extends cc.Component {
             } else {
                 this.pushNode(node);
             }
-            if (i === this._listNodes.length - 1 && nodeBottom > this.listBottom()) {
+            if (i === this._listNodes.length - 1 && nodeBottom - this.spacing > this.listBottom()) {
                 const addNode = this.addNode(name, node.y - node.height * node.anchorY, false);
                 addNode && keepNodes.push(addNode);
             }
