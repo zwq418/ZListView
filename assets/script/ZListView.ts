@@ -9,10 +9,6 @@ let isTouch = false;
 let isScrolling = false;
 let scrollId;
 let scrollDirection = 0;
-let getTimeInMilliseconds = function() {
-    let currentTime = new Date();
-    return currentTime.getMilliseconds();
-};
 
 @ccclass
 export default class ZListView extends cc.Component {
@@ -187,7 +183,7 @@ export default class ZListView extends cc.Component {
     // touch event handler
     _onTouchBegan (event, captureListeners) {
         if (!this.enabledInHierarchy) return;
-        lastTouchTime = getTimeInMilliseconds();
+        lastTouchTime = 0;
         isTouch = true;
     }
 
@@ -197,10 +193,11 @@ export default class ZListView extends cc.Component {
         let touch = event.touch;
         const deltaY = touch.getDelta().y;
         this.scrollChildren(deltaY);
-        const touchTime = getTimeInMilliseconds();
-        lastSpeed = deltaY / (touchTime - lastTouchTime);
-        lastSpeed = lastSpeed > 50 ? 50 : lastSpeed < -50 ? -50 : lastSpeed;
-        lastTouchTime = getTimeInMilliseconds();
+        if (lastTouchTime > 0) {
+            lastSpeed = deltaY / (touch._lastModified - lastTouchTime);
+            lastSpeed = lastSpeed > 50 ? 50 : lastSpeed < -50 ? -50 : lastSpeed;
+        }
+        lastTouchTime = touch._lastModified;
         isScrolling = true;
     }
 
