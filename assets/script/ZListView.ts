@@ -258,13 +258,18 @@ export default class ZListView extends cc.Component {
         }
         this._listNodes = keepNodes;
         if (keepNodes.length === 0) {
+            let index;
             if (this.hasScrollId()) {
-                const index = this.listData.findIndex(item => item[this.listKey] == scrollId);
-                this.layoutItem(index, 0);
-            } else if (deltaY < 0) {
-                this.layoutItem(0, this.listTop());
+                index = this.listData.findIndex(item => item[this.listKey] == scrollId);
+            } else if (deltaY <= 0) {
+                index = 0;
             } else if (deltaY > 0) {
-                this.layoutItem(this.listData.length - 1, this.listBottom());
+                index = this.listData.length - 1;
+            }
+            if (deltaY <= 0) {
+                this.layoutItem(index, this.listTop());
+            } else if (deltaY > 0) {
+                this.layoutItem(index, this.listBottom());
             }
         }
     }
