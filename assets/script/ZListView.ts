@@ -101,8 +101,7 @@ export default class ZListView extends cc.Component {
         if (this.topToBottom) {
             this.layoutItems(0, this.listTop());
         } else {
-            this.layoutItems(this.listData.length - 1, this.listBottom() + 1);
-            this.scheduleOnce(this.scrollToBottom);
+            this.layoutItemsReverse(this.listData.length - 1, this.listBottom());
         }
     }
 
@@ -135,8 +134,27 @@ export default class ZListView extends cc.Component {
             currentNode = this.layoutItem(lastIndex, lastY);
             lastIndex += 1;
             lastY = this.nodeBottom(currentNode);
-            lastY += -this.spacing;
+            lastY -= this.spacing;
         } while (lastIndex < this.listData.length - 1 && lastY > this.listBottom())
+    }
+
+    layoutItemReverse(index, y) {
+        const node = this.popNode(index);
+        node.y = y + node.height * node.anchorY;
+        this._listNodes.push(node);
+        return node;
+    }
+
+    layoutItemsReverse(lastIndex, lastY) {
+        let currentNode;
+        do {
+            currentNode = this.layoutItemReverse(lastIndex, lastY);
+            lastIndex -= 1;
+            lastY = this.nodeTop(currentNode);
+            lastY += this.spacing;
+        } while (lastIndex >= 0 && lastY < this.listTop())
+        this._listNodes.reverse();
+        this.scrollChildren(this.node.height);
     }
 
     start () {
