@@ -45,15 +45,21 @@ export default class TestScene extends cc.Component {
     }
 
     private addData(index, add) {
-        const current = this.listData[index];
-        const near = this.listData[index + add];
-        const id = near ? (current.id + near.id) / 2 : current.id + add;
+        let id;
+        if (this.listData.length > 0) {
+            const current = this.listData[index];
+            const near = this.listData[index + add];
+            id = near ? (current.id + near.id) / 2 : current.id + add;
+        } else {
+            id = 0;
+        }
         const idUInt = Math.round(Math.abs(id));
         this.listData.splice(index + (add > 0 ? 1 : 0), 0, {
             id,
             type: idUInt % 2,
             avatar: URLS[idUInt % URLS.length]
         });
+        this.listView.listData = this.listData;
     }
 
     public scrollToTop() {
@@ -69,27 +75,27 @@ export default class TestScene extends cc.Component {
     }
 
     public bottomAdd1() {
-        this.addData(this.listData.length - 1, 1);
-        // this.listView.scrollToBottom();
+        this.addData(Math.max(this.listData.length - 1, 0), 1);
+        this.listView.notifyDataChanged();
     }
 
     public bottomAdd10() {
         for (let i = 0; i < 10; i++) {
-            this.addData(this.listData.length - 1, 1);
+            this.addData(Math.max(this.listData.length - 1, 0), 1);
         }
-        // this.listView.scrollToBottom();
+        this.listView.notifyDataChanged();
     }
 
     public topAdd1() {
         this.addData(0, -1);
-        // this.listView.scrollToTop();
+        this.listView.notifyDataChanged();
     }
 
     public topAdd10() {
         for (let i = 0; i < 10; i++) {
             this.addData(0, -1);
         }
-        // this.listView.scrollToTop();
+        this.listView.notifyDataChanged();
     }
 
     public tenAdd1() {

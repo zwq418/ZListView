@@ -64,16 +64,19 @@ export default class ZListView extends cc.Component {
     _listNodes: cc.Node[] = [];
 
     public scrollToTop() {
+        if (this.listData.length === 0) return;
         this.scrollToId(this.listData[0][this.listKey]);
     }
 
     public scrollToBottom() {
+        if (this.listData.length === 0) return;
         this.scrollToId(this.listData[this.listData.length - 1][this.listKey]);
     }
 
     public scrollToId(id) {
+        if (this.listData.length === 0) return;
         const targetIndex = this.listData.findIndex(item => item[this.listKey] == id);
-        const currentIndex = this.listData.findIndex(item => item[this.listKey] == this._listNodes[Math.round(this._listNodes.length / 2)].name);
+        const currentIndex = this.listData.findIndex(item => item[this.listKey] == this._listNodes[Math.floor(this._listNodes.length / 2)].name);
         if (targetIndex != currentIndex) {
             const rate = (targetIndex - currentIndex) / 30;
             scrollDirection = Math.max(Math.min(rate, 1), -1) * MAX_SPEED;
@@ -86,22 +89,35 @@ export default class ZListView extends cc.Component {
     }
 
     public notifyDataChanged() {
-        const firstNode = this._listNodes[0];
-        let lastIndex = this.listData.findIndex(item => item[this.listKey] == firstNode.name);
-        let lastY = this.nodeTop(firstNode);
-        for (let i = this._listNodes.length - 1; i >= 0; i--) {
-            this.pushNode(this._listNodes[i]);
+        if (this._listNodes.length === 0) {
+            if (this.listData.length > 0) {
+                this.layoutItems(0, this.listTop);
+            }
+        } else {
+            if (this.listData.length === 0) {
+                this.recycleItems();
+            } else {
+                const firstNode = this._listNodes[0];
+                let lastIndex = this.listData.findIndex(item => item[this.listKey] == firstNode.name);
+                if (lastIndex >= 0) {
+                    let lastY = this.nodeTop(firstNode);
+                    this.recycleItems();
+                    this.layoutItems(lastIndex, lastY);
+                } else {
+                    this.layoutItems(0, this.listTop());
+                }
+            }
         }
-        this._listNodes = [];
-        this.layoutItems(lastIndex, lastY);
     }
 
     onLoad () {
         this.preloadItems();
-        if (this.topToBottom) {
-            this.layoutItems(0, this.listTop());
-        } else {
-            this.layoutItemsReverse(this.listData.length - 1, this.listBottom());
+        if (this.listData.length > 0) {
+            if (this.topToBottom) {
+                this.layoutItems(0, this.listTop());
+            } else {
+                this.layoutItemsReverse(this.listData.length - 1, this.listBottom());
+            }
         }
     }
 
@@ -155,6 +171,13 @@ export default class ZListView extends cc.Component {
         } while (lastIndex >= 0 && lastY < this.listTop())
         this._listNodes.reverse();
         this.scrollChildren(this.node.height);
+    }
+
+    recycleItems() {
+        for (let i = this._listNodes.length - 1; i >= 0; i--) {
+            this.pushNode(this._listNodes[i]);
+        }
+        this._listNodes = [];
     }
 
     start () {
@@ -257,7 +280,7 @@ export default class ZListView extends cc.Component {
             }
         }
         this._listNodes = keepNodes;
-        if (keepNodes.length === 0) {
+        if (keepNodes.length === 0 && this.listData.length > 0) {
             let index;
             if (this.hasScrollId()) {
                 index = this.listData.findIndex(item => item[this.listKey] == scrollId);
@@ -275,6 +298,9 @@ export default class ZListView extends cc.Component {
     }
 
     fixDeltaY(deltaY) {
+        if (this.listData.length === 0) {
+            return deltaY;
+        }
         if (deltaY < 0) {
             deltaY = this.fixTopNode(deltaY, this.listData[0][this.listKey], 0);
         } else if (deltaY > 0) {
