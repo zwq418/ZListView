@@ -63,6 +63,9 @@ export default class ZListView extends cc.Component {
     @property([cc.Node])
     _listNodes: cc.Node[] = [];
 
+    @property([cc.Integer])
+    _itemHeights = [];
+
     public scrollToTop() {
         if (this.listData.length === 0) return;
         this.scrollToId(this.listData[0][this.listKey]);
@@ -111,23 +114,8 @@ export default class ZListView extends cc.Component {
     }
 
     onLoad () {
-        this.preloadItems();
-        this.initItems();
-    }
-
-    preloadItems() {
-        for (let i = 0; i < this.itemPrefabs.length; i++) {
-            this._itemNodes[i] = [];
-            let itemsHeight = 0;
-            for (let j = 0; j < 20; j++) {
-                const node = cc.instantiate(this.itemPrefabs[i]);
-                this.node.addChild(node);
-                this.pushNode(node, i);
-                itemsHeight += node.height;
-                if (itemsHeight >= this.node.height + 2 * node.height) {
-                    break;
-                }
-            }
+        if (this._listNodes.length === 0) {
+            this.initItems();
         }
     }
 
@@ -406,7 +394,26 @@ export default class ZListView extends cc.Component {
 
     popNode(index) {
         const itemData = this.listData[index];
-        const node = this._itemNodes[itemData[this.listType]].pop();
+        const type = itemData[this.listType];
+        if (!this._itemNodes) {
+            this._itemNodes = [];
+        }
+        if (!this._itemNodes[type]) {
+            this._itemNodes[type] = [];
+        }
+        if (this._itemNodes[type].length === 0) {
+            const node = cc.instantiate(this.itemPrefabs[type]);
+            this.node.addChild(node);
+            this.pushNode(node, type);
+            if (!this._itemHeights[type]) {
+                this._itemHeights[type] = 0;
+            }
+            this._itemHeights[type] += node.height + this.spacing;
+            if (this._itemHeights[type] >= this.node.height + 2 * node.height) {
+                throw new Error('高度计算异常，生成了过多的item，可能会有性能问题')
+            }
+        }
+        const node = this._itemNodes[type].pop();
         node.x = 0;
         node.opacity = 255;
         node.name = itemData[this.listKey].toString();
