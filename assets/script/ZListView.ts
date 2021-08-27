@@ -74,7 +74,7 @@ export default class ZListView extends cc.Component {
     }
 
     public scrollToId(id) {
-        if (this.listData.length === 0) return;
+        if (this.listData.length === 0 || this._listNodes.length === 0) return;
         const targetIndex = this.listData.findIndex(item => item[this.listKey] == id);
         const currentIndex = this.listData.findIndex(item => item[this.listKey] == this._listNodes[Math.floor(this._listNodes.length / 2)].name);
         if (targetIndex != currentIndex) {
@@ -88,37 +88,31 @@ export default class ZListView extends cc.Component {
         return typeof scrollId != 'undefined';
     }
 
+    firstNodeInfo() {
+        if (this._listNodes.length > 0) {
+            const firstNode =  this._listNodes[0];
+            let index = this.listData.findIndex(item => item[this.listKey] == firstNode.name);
+            if (index >= 0) {
+                let y = this.nodeTop(firstNode);
+                return { index, y }
+            }
+        }
+        return null;
+    }
+
     public notifyDataChanged() {
-        if (this._listNodes.length === 0) {
-            if (this.listData.length > 0) {
-                this.layoutItems(0, this.listTop);
-            }
+        const firstNodeInfo = this.firstNodeInfo();
+        this.recycleItems();
+        if (firstNodeInfo) {
+            this.layoutItems(firstNodeInfo.index, firstNodeInfo.y);
         } else {
-            if (this.listData.length === 0) {
-                this.recycleItems();
-            } else {
-                const firstNode = this._listNodes[0];
-                let lastIndex = this.listData.findIndex(item => item[this.listKey] == firstNode.name);
-                if (lastIndex >= 0) {
-                    let lastY = this.nodeTop(firstNode);
-                    this.recycleItems();
-                    this.layoutItems(lastIndex, lastY);
-                } else {
-                    this.layoutItems(0, this.listTop());
-                }
-            }
+            this.initItems();
         }
     }
 
     onLoad () {
         this.preloadItems();
-        if (this.listData.length > 0) {
-            if (this.topToBottom) {
-                this.layoutItems(0, this.listTop());
-            } else {
-                this.layoutItemsReverse(this.listData.length - 1, this.listBottom());
-            }
-        }
+        this.initItems();
     }
 
     preloadItems() {
@@ -133,6 +127,16 @@ export default class ZListView extends cc.Component {
                 if (itemsHeight >= this.node.height + 2 * node.height) {
                     break;
                 }
+            }
+        }
+    }
+
+    initItems() {
+        if (this.listData.length > 0) {
+            if (this.topToBottom) {
+                this.layoutItems(0, this.listTop());
+            } else {
+                this.layoutItemsReverse(this.listData.length - 1, this.listBottom());
             }
         }
     }
