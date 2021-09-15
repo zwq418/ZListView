@@ -81,12 +81,18 @@ export default class ZListView extends cc.Component {
 
     public scrollToId(id) {
         if (this.listData.length === 0 || this._listNodes.length === 0) return;
-        const targetIndex = this.listData.findIndex(item => item[this.listKey] == id);
-        const currentIndex = this.listData.findIndex(item => item[this.listKey] == this._listNodes[Math.floor(this._listNodes.length / 2)].name);
-        if (targetIndex != currentIndex) {
-            const rate = (targetIndex - currentIndex) / 30;
-            scrollDirection = Math.max(Math.min(rate, 1), -1) * MAX_SPEED;
+        const targetNodeIndex = this._listNodes.findIndex(node => node.name == id);
+        if (targetNodeIndex >= 0) {
+            scrollDirection = -(this._listNodes[targetNodeIndex].y - this.listTop()) / MAX_SPEED;
             scrollId = id;
+        } else {
+            const targetIndex = this.listData.findIndex(item => item[this.listKey] == id);
+            const currentIndex = this.listData.findIndex(item => item[this.listKey] == this._listNodes[Math.floor(this._listNodes.length / 2)].name);
+            if (targetIndex != currentIndex) {
+                const rate = (targetIndex - currentIndex) / 30;
+                scrollDirection = Math.max(Math.min(rate, 1), -1) * MAX_SPEED;
+                scrollId = id;
+            }
         }
     }
 
