@@ -66,6 +66,9 @@ export default class ZListView extends cc.Component {
     @property([cc.Integer])
     _itemHeights = [];
 
+    @property
+    _hasInit = false;
+
     public scrollToTop() {
         if (this.listData.length === 0) return;
         this.scrollToId(this.listData[0][this.listKey]);
@@ -104,6 +107,7 @@ export default class ZListView extends cc.Component {
     }
 
     public notifyDataChanged() {
+        if (!this._hasInit) return;
         const firstNodeInfo = this.firstNodeInfo();
         this.recycleItems();
         if (firstNodeInfo) {
@@ -114,9 +118,16 @@ export default class ZListView extends cc.Component {
     }
 
     onLoad () {
-        if (this._listNodes.length === 0) {
-            this.initItems();
+        if (cc.director.getScene().getComponentInChildren(cc.Canvas).fitHeight) {
+            this.onSizeChange();
+        } else {
+            this.node.once(cc.Node.EventType.SIZE_CHANGED, this.onSizeChange, this);
         }
+    }
+
+    onSizeChange() {
+        this._hasInit = true;
+        this.notifyDataChanged();
     }
 
     initItems() {
@@ -176,6 +187,7 @@ export default class ZListView extends cc.Component {
     }
 
     update (dt) {
+        if (!this._hasInit) return;
         if (!isTouch && isScrolling) {
             if (Math.abs(lastSpeed) > 0.1) {
                 lastSpeed *= (1 - 5 *dt);

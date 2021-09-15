@@ -31,7 +31,7 @@ export default class TestScene extends cc.Component {
     listData: any[] = [];
 
     onLoad() {
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 50; i++) {
             this.listData.push({
                 id: i,
                 type: i % 2,
