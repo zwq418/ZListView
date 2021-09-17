@@ -124,14 +124,11 @@ export default class ZListView extends cc.Component {
     }
 
     onLoad () {
-        if (cc.director.getScene().getComponentInChildren(cc.Canvas).fitHeight) {
-            this.onSizeChange();
-        } else {
-            this.node.once(cc.Node.EventType.SIZE_CHANGED, this.onSizeChange, this);
-        }
+        this.scheduleOnce(this.onSizeChange);
     }
 
     onSizeChange() {
+        this.unschedule(this.onSizeChange);
         this._hasInit = true;
         this.notifyDataChanged();
     }
@@ -222,6 +219,7 @@ export default class ZListView extends cc.Component {
         this.node.on(cc.Node.EventType.TOUCH_MOVE, this._onTouchMoved, this, true);
         this.node.on(cc.Node.EventType.TOUCH_END, this._onTouchEnded, this, true);
         this.node.on(cc.Node.EventType.TOUCH_CANCEL, this._onTouchCancelled, this, true);
+        this.node.once(cc.Node.EventType.SIZE_CHANGED, this.onSizeChange, this);
     }
 
     unregisterEvent () {
@@ -229,6 +227,7 @@ export default class ZListView extends cc.Component {
         this.node.off(cc.Node.EventType.TOUCH_MOVE, this._onTouchMoved, this, true);
         this.node.off(cc.Node.EventType.TOUCH_END, this._onTouchEnded, this, true);
         this.node.off(cc.Node.EventType.TOUCH_CANCEL, this._onTouchCancelled, this, true);
+        this.node.off(cc.Node.EventType.SIZE_CHANGED, this.onSizeChange, this);
     }
 
     // touch event handler
