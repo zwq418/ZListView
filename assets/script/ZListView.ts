@@ -83,13 +83,14 @@ export default class ZListView extends cc.Component {
         if (this.listData.length === 0 || this._listNodes.length === 0) return;
         const targetNodeIndex = this._listNodes.findIndex(node => node.name == id);
         if (targetNodeIndex >= 0) {
-            scrollDirection = -(this._listNodes[targetNodeIndex].y - this.listTop()) / MAX_SPEED;
+            const rate = (this.listTop() - this.nodeTop(this._listNodes[targetNodeIndex])) / 1000;
+            scrollDirection = Math.max(Math.min(rate, 1), -1) * MAX_SPEED;
             scrollId = id;
         } else {
             const targetIndex = this.listData.findIndex(item => item[this.listKey] == id);
             const currentIndex = this.listData.findIndex(item => item[this.listKey] == this._listNodes[Math.floor(this._listNodes.length / 2)].name);
             if (targetIndex != currentIndex) {
-                const rate = (targetIndex - currentIndex) / 30;
+                const rate = (targetIndex - currentIndex) / this._listNodes.length;
                 scrollDirection = Math.max(Math.min(rate, 1), -1) * MAX_SPEED;
                 scrollId = id;
             }
@@ -245,7 +246,7 @@ export default class ZListView extends cc.Component {
         this.scrollChildren(deltaY);
         if (lastTouchTime > 0) {
             lastSpeed = deltaY / (touch._lastModified - lastTouchTime);
-            lastSpeed = lastSpeed > 50 ? 50 : lastSpeed < -50 ? -50 : lastSpeed;
+            lastSpeed = Math.min(Math.max(lastSpeed, -MAX_SPEED), MAX_SPEED);
         }
         lastTouchTime = touch._lastModified;
         isScrolling = true;

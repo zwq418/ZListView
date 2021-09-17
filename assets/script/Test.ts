@@ -34,7 +34,7 @@ export default class TestScene extends cc.Component {
         for (let i = 0; i < 50; i++) {
             this.listData.push({
                 id: i,
-                type: i % 2,
+                type: i % this.listView.itemPrefabs.length,
                 avatar: URLS[i % URLS.length],
             });
         }
@@ -56,7 +56,7 @@ export default class TestScene extends cc.Component {
         const idUInt = Math.round(Math.abs(id));
         this.listData.splice(index + (add > 0 ? 1 : 0), 0, {
             id,
-            type: idUInt % 2,
+            type: idUInt % this.listView.itemPrefabs.length,
             avatar: URLS[idUInt % URLS.length]
         });
         this.listView.listData = this.listData;
@@ -71,7 +71,7 @@ export default class TestScene extends cc.Component {
     }
 
     public to10() {
-        this.listView.scrollToId(10);
+        this.listView.scrollToId(11);
     }
 
     public bottomAdd1() {
