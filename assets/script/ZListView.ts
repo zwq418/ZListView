@@ -261,6 +261,7 @@ export default class ZListView extends cc.Component {
         if (!this.enabledInHierarchy) return;
         isTouch = false;
         isScrolling = false;
+        lastSpeed = 0;
     }
 
     scrollChildren (deltaY) {
@@ -323,11 +324,16 @@ export default class ZListView extends cc.Component {
                 if (node.name == scrollId) {
                     const nodeTop = this.nodeTop(node);
                     if (deltaY != 0) {
-                        if (nodeTop + deltaY < this.listTop()) {
-                            deltaY = -nodeTop + this.listTop();
-                            scrollId = undefined;
-                            if (deltaY > 0) {
+                        if (deltaY > 0) {
+                            if (nodeTop + deltaY > this.listTop()) {
+                                deltaY = -nodeTop + this.listTop();
+                                scrollId = undefined;
                                 deltaY = this.fixLastNode(deltaY, this.listData[this.listData.length - 1][this.listKey]);
+                            }
+                        } else {
+                            if (nodeTop + deltaY < this.listTop()) {
+                                deltaY = -nodeTop + this.listTop();
+                                scrollId = undefined;
                             }
                         }
                     } else {
